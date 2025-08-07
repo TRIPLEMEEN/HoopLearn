@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-# At the top of app/main.py
-
+from .api.endpoints import auth
 
 
 
@@ -21,8 +20,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from .endpoints import test
-app.include_router(test.router, prefix="/api/v1", tags=["test"])
+from .api.endpoints import test
+app.include_router(test.router, prefix=f"{settings.API_V1_STR}/test", tags=["test"])
+
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 
 @app.get("/")
 async def root():

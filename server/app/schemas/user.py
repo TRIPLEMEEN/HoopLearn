@@ -7,21 +7,35 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=8)
 
-class UserUpdate(UserBase):
-    password: Optional[str] = None
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    password: Optional[str] = Field(None, min_length=8)
 
 class UserInDBBase(UserBase):
     id: int
     is_active: bool
-    role: str
+    is_verified: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class User(UserInDBBase):
     pass
 
 class UserInDB(UserInDBBase):
     hashed_password: str
+
+class TokenData(BaseModel):
+    email: Optional[EmailStr] = None
+
+class EmailSchema(BaseModel):
+    email: EmailStr
+
+class ResetPassword(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)

@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .api.endpoints import auth
 
 
 
@@ -20,10 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from .api.endpoints import test
-app.include_router(test.router, prefix=f"{settings.API_V1_STR}/test", tags=["test"])
+# Import routers after app creation to avoid circular imports
+from .api.endpoints.auth import router as auth_router
+from .api.endpoints.test import router as test_router
 
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+# Include API routers
+app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(test_router, prefix=f"{settings.API_V1_STR}/test", tags=["test"])
 
 @app.get("/")
 async def root():

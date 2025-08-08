@@ -16,24 +16,33 @@ from app.schemas.user import UserCreate, User as UserSchema
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserSchema)
-async def register(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
+@router.post("/register", response_model=Token)
+async def register(user_in: UserCreate, db: Session = Depends(deps.get_db)):
+    db_user = db.query(User).filter(User.email == user_in.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    hashed_password = get_password_hash(user.password)
+    hashed_password = get_password_hash(user_in.password)
     db_user = User(
-        email=user.email,
+        email=user_in.email,
         hashed_password=hashed_password,
-        full_name=user.full_name,
+        full_name=user_in.full_name,
         is_active=True,
         role="student"
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user
+    # Add verification token
+    verification_token = secrets.token_urlsafe(32)
+    user_in_db.verification_token = verification_token
+    db.commit()
+    
+    # Send verification email (in production)
+    verification_link = f"{settings.FRONTEND_URL}/verify-email/{verification_token}"
+    print(f"Verification link: {verification_link}")  # Replace with email sending
+    
+    return {"access_token": create_access_token(data={"sub": user_in.email}), "token_type": "bearer"}
 
 @router.post("/login", response_model=Token)
 async def login(
